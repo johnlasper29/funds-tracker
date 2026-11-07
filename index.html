@@ -209,7 +209,25 @@
     <button class="btn-action" onclick="addRow()">+ Add Account</button>
 </div>
 
-<script>
+<!-- Firebase SDKs & Real-time Sync Logic -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyD4K17Q8r5-GDShRYRn4RU6Ki1mWbTHGew",
+        authDomain: "funds-tracker-1609a.firebaseapp.com",
+        databaseURL: "https://funds-tracker-1609a-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "funds-tracker-1609a",
+        storageBucket: "funds-tracker-1609a.firebasestorage.app",
+        messagingSenderId: "646295926768",
+        appId: "1:646295926768:web:6dd7984eff88e508d5cf35"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const fundsRef = ref(db, 'funds_data');
+
     let defaultData = [
         { name: "Cash", amount: "2,320" },
         { name: "GCash", amount: "10,005" },
@@ -220,63 +238,68 @@
         { name: "Cherry", amount: "5,890" }
     ];
 
-    let fundsData = [];
+    window.fundsData = [];
+    let isRemoteUpdate = false;
 
-    function loadData() {
-        let saved = localStorage.getItem('bankAppTracker_lighter_data');
-        if (saved) {
-            try {
-                fundsData = JSON.parse(saved);
-            } catch(e) {
-                fundsData = defaultData;
-            }
+    // Real-time listener gikan sa Firebase Cloud
+    onValue(fundsRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+            window.fundsData = data;
+            localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(data));
         } else {
-            fundsData = defaultData;
+            // Kung walay pa sulod sa database, i-save ang default data
+            window.fundsData = defaultData;
+            set(fundsRef, defaultData);
         }
         renderTable();
+    });
+
+    window.saveData = function() {
+        localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(window.fundsData));
+        // I-push dayon ang pag-usab sa Firebase
+        set(fundsRef, window.fundsData)
+            .catch((error) => {
+                console.error("Error sa pag-sync:", error);
+            });
     }
 
-    function saveData() {
-        localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(fundsData));
-    }
-
-    function formatNumber(num) {
+    window.formatNumber = function(num) {
         return num.toLocaleString();
     }
 
-    function parseNum(val) {
+    window.parseNum = function(val) {
         if (!val) return 0;
         let clean = val.toString().replace(/,/g, '');
         let parsed = parseFloat(clean);
         return isNaN(parsed) ? 0 : parsed;
     }
 
-    // Gipahayagan gamay ang background gradient aron mas nindot tan-awon
-    function getBrandInfo(name) {
+    window.getBrandInfo = function(name) {
         if (!name) return { color: '#475569', bg: 'linear-gradient(90deg, rgba(71, 85, 105, 0.18) 0%, rgba(17, 24, 39, 0.9) 80%)', icon: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>` };
         let lower = name.toLowerCase().trim();
         
         if (lower.includes('gcash')) {
             return {
-                color: '#0099ff', // Mas hayag nga GCash blue
+                color: '#0099ff',
                 bg: 'linear-gradient(90deg, rgba(0, 153, 255, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
                 icon: `<svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>`
             };
         } else if (lower.includes('maribank')) {
             return {
-                color: '#fb923c', // Mas hayag nga MariBank orange
+                color: '#fb923c',
                 bg: 'linear-gradient(90deg, rgba(251, 146, 60, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
                 icon: `<svg viewBox="0 0 24 24"><path d="M11.5 1L2 6v2h19V6m-9.5 4c-3.87 0-7 3.13-7 7s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7m0 12c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>`
             };
         } else if (lower.includes('maya')) {
             return {
-                color: '#22d3ee', // Mas hayag nga Maya cyan/green
+                color: '#22d3ee',
                 bg: 'linear-gradient(90deg, rgba(34, 211, 238, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
                 icon: `<svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`
             };
         } else if (lower.includes('cash')) {
             return {
-                color: '#34d399', // Mas hayag nga Cash green
+                color: '#34d399',
                 bg: 'linear-gradient(90deg, rgba(52, 211, 153, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
                 icon: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.64 0-.83-.41-1.64-2.92-2.23-3.22-.75-4.42-1.83-4.42-3.5 0-1.64 1.32-2.86 3.12-3.21V4h2.67v1.95c1.4.31 2.7 1.25 2.92 3.01h-1.97c-.12-.8-.71-1.41-2.13-1.41-1.35 0-2.05.59-2.05 1.44 0 .75.48 1.32 2.62 1.83 3.39.81 4.72 1.83 4.72 3.65 0 1.73-1.3 2.96-3.23 3.34z"/></svg>`
             };
@@ -289,11 +312,11 @@
         }
     }
 
-    function renderTable() {
+    window.renderTable = function() {
         let container = document.getElementById('rows-container');
         container.innerHTML = '';
 
-        fundsData.forEach((item, index) => {
+        window.fundsData.forEach((item, index) => {
             let rowDiv = document.createElement('div');
             rowDiv.className = 'row-item';
 
@@ -314,8 +337,8 @@
         calculateGrandTotal();
     }
 
-    function updateItemName(index, inputEl) {
-        fundsData[index]['name'] = inputEl.value;
+    window.updateItemName = function(index, inputEl) {
+        window.fundsData[index]['name'] = inputEl.value;
         let brand = getBrandInfo(inputEl.value);
         
         let rowEl = inputEl.closest('.row-item');
@@ -330,46 +353,44 @@
         saveData();
     }
 
-    function handleAmountInput(index, inputEl) {
-        fundsData[index]['amount'] = inputEl.value;
+    window.handleAmountInput = function(index, inputEl) {
+        window.fundsData[index]['amount'] = inputEl.value;
         saveData();
         calculateGrandTotal();
     }
 
-    function formatAmountBlur(index, inputEl) {
+    window.formatAmountBlur = function(index, inputEl) {
         let rawVal = inputEl.value.trim();
         if (rawVal !== "") {
             let num = parseNum(rawVal);
             if (num > 0 || rawVal === "0") {
                 inputEl.value = formatNumber(num);
-                fundsData[index]['amount'] = inputEl.value;
+                window.fundsData[index]['amount'] = inputEl.value;
                 saveData();
             }
         }
         calculateGrandTotal();
     }
 
-    function calculateGrandTotal() {
+    window.calculateGrandTotal = function() {
         let total = 0;
-        fundsData.forEach(item => {
+        window.fundsData.forEach(item => {
             total += parseNum(item.amount);
         });
         document.getElementById('grand-total').innerText = formatNumber(total);
     }
 
-    function addRow() {
-        fundsData.push({ name: "", amount: "" });
+    window.addRow = function() {
+        window.fundsData.push({ name: "", amount: "" });
         saveData();
         renderTable();
     }
 
-    function deleteRow(index) {
-        fundsData.splice(index, 1);
+    window.deleteRow = function(index) {
+        window.fundsData.splice(index, 1);
         saveData();
         renderTable();
     }
-
-    loadData();
 </script>
 
 </body>

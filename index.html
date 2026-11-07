@@ -284,7 +284,7 @@
 <!-- Pattern Lock Screen -->
 <div id="lock-screen">
     <div class="lock-container">
-        <div class="lock-title" id="lock-prompt">Draw Your New Pattern</div>
+        <div class="lock-title" id="lock-prompt">Set Your New Pattern</div>
         <div class="pattern-grid" id="pattern-grid">
             <svg id="pattern-svg">
                 <line id="current-line" x1="0" y1="0" x2="0" y2="0" stroke="#059669" stroke-width="4" stroke-linecap="round" style="display:none;"/>
@@ -354,19 +354,24 @@
     window.fundsData = [];
     let saveTimeout = null;
 
-    // Direct Setup: Bisan unsa ang unang i-draw nimo karon, maoy mahimong pattern mo!
+    // Kuhaa ang saved pattern gikan sa localStorage
     let savedPattern = localStorage.getItem('fundsApp_pattern') || "";
     let selectedDots = [];
     let isDrawing = false;
     let confirmStepPattern = "";
 
+    const lockScreen = document.getElementById('lock-screen');
+    const lockPrompt = document.getElementById('lock-prompt');
     const grid = document.getElementById('pattern-grid');
     const dots = document.querySelectorAll('.pattern-dot');
     const svg = document.getElementById('pattern-svg');
     const currentLine = document.getElementById('current-line');
 
-    if (!savedPattern) {
-        document.getElementById('lock-prompt').innerText = "Set Your New Pattern (Draw once)";
+    // Kung naay nake-save na, "Draw Unlock Pattern" ang ipakita. Kung wala pa, "Set Your New Pattern".
+    if (savedPattern) {
+        lockPrompt.innerText = "Draw Unlock Pattern";
+    } else {
+        lockPrompt.innerText = "Set Your New Pattern (Draw once)";
     }
 
     function getDotCenter(dot) {
@@ -473,7 +478,7 @@
 
     function handlePatternInput(patternStr) {
         if (!savedPattern) {
-            // Kung wala pay nake-save, himuon kini nga pinakabag-ong pattern
+            // Setup mode: Naghimo pa lang og bag-ong pattern
             if (patternStr.split(',').length < 3) {
                 document.getElementById('lock-error').innerText = "Connect at least 3 dots!";
                 setTimeout(resetPatternInput, 600);
@@ -481,25 +486,25 @@
             }
             if (!confirmStepPattern) {
                 confirmStepPattern = patternStr;
-                document.getElementById('lock-prompt').innerText = "Draw Pattern Again to Confirm";
+                lockPrompt.innerText = "Draw Pattern Again to Confirm";
                 setTimeout(resetPatternInput, 400);
             } else {
                 if (patternStr === confirmStepPattern) {
                     savedPattern = confirmStepPattern;
                     localStorage.setItem('fundsApp_pattern', savedPattern);
                     alert("Pattern saved successfully!");
-                    document.getElementById('lock-screen').style.display = 'none';
+                    lockScreen.style.display = 'none';
                 } else {
                     document.getElementById('lock-error').innerText = "Patterns do not match. Start over.";
                     confirmStepPattern = "";
-                    document.getElementById('lock-prompt').innerText = "Set Your New Pattern";
+                    lockPrompt.innerText = "Set Your New Pattern";
                 }
                 setTimeout(resetPatternInput, 600);
             }
         } else {
-            // Normal Unlock mode
+            // Unlock mode: Gisulayan pag-abli gamit ang naka-save nga pattern
             if (patternStr === savedPattern) {
-                document.getElementById('lock-screen').style.display = 'none';
+                lockScreen.style.display = 'none';
             } else {
                 document.getElementById('lock-error').innerText = "Incorrect pattern. Try again.";
                 setTimeout(resetPatternInput, 600);
@@ -512,9 +517,9 @@
             localStorage.removeItem('fundsApp_pattern');
             savedPattern = "";
             confirmStepPattern = "";
-            document.getElementById('lock-prompt').innerText = "Draw Your NEW Pattern";
+            lockPrompt.innerText = "Draw Your NEW Pattern";
             resetPatternInput();
-            document.getElementById('lock-screen').style.display = 'flex';
+            lockScreen.style.display = 'flex';
         }
     }
 

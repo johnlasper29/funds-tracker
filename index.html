@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bank Accounts Dashboard</title>
+    <!-- Custom App Icons (Pang-home screen sa iPhone/Android - ilisi lang ang 'logo.png' sa imong gusto nga filename) -->
+    <link rel="apple-touch-icon" href="logo.png">
+    <link rel="icon" type="image/png" href="logo.png">
+
     <!-- Google Font: Montserrat -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -246,11 +250,9 @@
     onValue(fundsRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            // Susiha kung naay aktibong gi-type ang user karon sa screen
             let activeEl = document.activeElement;
             let isUserTyping = activeEl && (activeEl.classList.contains('input-name') || activeEl.classList.contains('input-amount'));
 
-            // Kung lahi ang data gikan sa cloud ug dili ang user ang kasamtangang ga-type
             if (JSON.stringify(data) !== JSON.stringify(window.fundsData)) {
                 window.fundsData = data;
                 localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(data));
@@ -258,7 +260,7 @@
                 if (!isUserTyping) {
                     renderTable();
                 } else {
-                    calculateGrandTotal(); // I-update lang ang total kung ga-type pa para hapsay gihapon
+                    calculateGrandTotal();
                 }
             }
         } else {
@@ -269,7 +271,7 @@
         isInitialized = true;
     });
 
-    // Debounced Cloud Sync: Dili ma-hang ang app kay maghulat gamay sa paghunong og type sa dili pa i-push sa cloud
+    // Debounced Cloud Sync
     window.scheduleCloudSync = function() {
         localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(window.fundsData));
         clearTimeout(saveTimeout);
@@ -277,7 +279,7 @@
             set(fundsRef, window.fundsData).catch((error) => {
                 console.error("Error sa pag-sync:", error);
             });
-        }, 300); // Mo-sync dayon 300ms human nimo og type
+        }, 300);
     }
 
     window.formatNumber = function(num) {

@@ -284,7 +284,7 @@
 <!-- Pattern Lock Screen -->
 <div id="lock-screen">
     <div class="lock-container">
-        <div class="lock-title" id="lock-prompt">Set Your New Pattern</div>
+        <div class="lock-title" id="lock-prompt">Loading Security...</div>
         <div class="pattern-grid" id="pattern-grid">
             <svg id="pattern-svg">
                 <line id="current-line" x1="0" y1="0" x2="0" y2="0" stroke="#059669" stroke-width="4" stroke-linecap="round" style="display:none;"/>
@@ -340,6 +340,7 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const fundsRef = ref(db, 'funds_data');
+    const settingsRef = ref(db, 'app_settings');
 
     let defaultData = [
         { name: "Cash", amount: "2,320" },
@@ -354,11 +355,11 @@
     window.fundsData = [];
     let saveTimeout = null;
 
-    // Kuhaa ang saved pattern gikan sa localStorage
-    let savedPattern = localStorage.getItem('fundsApp_pattern') || "";
+    let cloudPattern = "";
     let selectedDots = [];
     let isDrawing = false;
     let confirmStepPattern = "";
+    let isSettingMode = false;
 
     const lockScreen = document.getElementById('lock-screen');
     const lockPrompt = document.getElementById('lock-prompt');
@@ -367,12 +368,20 @@
     const svg = document.getElementById('pattern-svg');
     const currentLine = document.getElementById('current-line');
 
-    // Kung naay nake-save na, "Draw Unlock Pattern" ang ipakita. Kung wala pa, "Set Your New Pattern".
-    if (savedPattern) {
-        lockPrompt.innerText = "Draw Unlock Pattern";
-    } else {
-        lockPrompt.innerText = "Set Your New Pattern (Draw once)";
-    }
+    // Real-time listener para sa Settings (Pattern sync sa cloud)
+    onValue(settingsRef, (snapshot) => {
+        const settings = snapshot.val();
+        if (settings && settings.pattern) {
+            cloudPattern = settings.pattern;
+            if (!isSettingMode) {
+                lockPrompt.innerText = "Draw Unlock Pattern";
+            }
+        } else {
+            // Kung wala pa sa cloud, mag-set ta og bag-ong pattern
+            cloudPattern = "";
+            lockPrompt.innerText = "Set Your New Pattern (Draw once)";
+        }
+    });
 
     function getDotCenter(dot) {
         const rect = dot.getBoundingClientRect();
@@ -477,8 +486,8 @@
     }
 
     function handlePatternInput(patternStr) {
-        if (!savedPattern) {
-            // Setup mode: Naghimo pa lang og bag-ong pattern
+        if (!cloudPattern || isSettingMode) {
+            // Pag-set o pag-ilis og bag-ong pattern
             if (patternStr.split(',').length < 3) {
                 document.getElementById('lock-error').innerText = "Connect at least 3 dots!";
                 setTimeout(resetPatternInput, 600);
@@ -490,10 +499,12 @@
                 setTimeout(resetPatternInput, 400);
             } else {
                 if (patternStr === confirmStepPattern) {
-                    savedPattern = confirmStepPattern;
-                    localStorage.setItem('fundsApp_pattern', savedPattern);
-                    alert("Pattern saved successfully!");
-                    lockScreen.style.display = 'none';
+                    // I-save diretso sa Firebase cloud aron ma-sync sa tanan devices
+                    set(settingsRef, { pattern: confirmStepPattern }).then(() => {
+                        alert("Pattern saved & synced to all devices!");
+                        isSettingMode = false;
+                        lockScreen.style.display = 'none';
+                    });
                 } else {
                     document.getElementById('lock-error').innerText = "Patterns do not match. Start over.";
                     confirmStepPattern = "";
@@ -502,8 +513,8 @@
                 setTimeout(resetPatternInput, 600);
             }
         } else {
-            // Unlock mode: Gisulayan pag-abli gamit ang naka-save nga pattern
-            if (patternStr === savedPattern) {
+            // Unlock mode
+            if (patternStr === cloudPattern) {
                 lockScreen.style.display = 'none';
             } else {
                 document.getElementById('lock-error').innerText = "Incorrect pattern. Try again.";
@@ -513,9 +524,8 @@
     }
 
     window.changePattern = function() {
-        if (confirm("Do you want to reset and create a NEW unlock pattern?")) {
-            localStorage.removeItem('fundsApp_pattern');
-            savedPattern = "";
+        if (confirm("Do you want to change the unlock pattern for ALL devices?")) {
+            isSettingMode = true;
             confirmStepPattern = "";
             lockPrompt.innerText = "Draw Your NEW Pattern";
             resetPatternInput();
@@ -523,7 +533,7 @@
         }
     }
 
-    // Smart Real-time listener
+    // Smart Real-time listener para sa Funds Data
     onValue(fundsRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {

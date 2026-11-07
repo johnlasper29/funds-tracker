@@ -4,9 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bank Accounts Dashboard</title>
-    <!-- Custom App Icons (Pang-home screen sa iPhone/Android - ilisi lang ang 'logo.png' sa imong gusto nga filename) -->
-    <link rel="apple-touch-icon" href="logo.png">
-    <link rel="icon" type="image/png" href="logo.png">
+    <!-- Custom App Icons -->
+    <link rel="apple-touch-icon" href="https://johnlasper29.github.io/funds-tracker/logo.png">
+    <link rel="icon" type="image/png" href="https://johnlasper29.github.io/funds-tracker/logo.png">
 
     <!-- Google Font: Montserrat -->
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -16,6 +16,7 @@
             margin: 0;
             padding: 0;
             font-family: 'Montserrat', Arial, sans-serif;
+            user-select: none;
         }
         body {
             background-color: #070a0f;
@@ -26,6 +27,79 @@
             align-items: center;
             min-height: 100vh;
         }
+
+        /* Pattern Lock Screen Overlay */
+        #lock-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #070a0f;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .lock-container {
+            width: 100%;
+            max-width: 320px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+        }
+        .lock-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #f3f4f6;
+            letter-spacing: 0.5px;
+        }
+        .pattern-grid {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            background: #0f172a;
+            border: 1px solid #1f2937;
+            border-radius: 20px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            padding: 24px;
+            touch-action: none;
+        }
+        .pattern-dot {
+            width: 24px;
+            height: 24px;
+            background: #334155;
+            border-radius: 50%;
+            margin: auto;
+            position: relative;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .pattern-dot.active {
+            background: #059669;
+            transform: scale(1.3);
+            box-shadow: 0 0 12px rgba(5, 150, 105, 0.6);
+        }
+        #pattern-svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+        }
+        .lock-error {
+            color: #f87171;
+            font-size: 13px;
+            min-height: 18px;
+        }
+        .pattern-actions {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        /* Main App Container */
         .app-container {
             width: 100%;
             max-width: 440px;
@@ -129,7 +203,7 @@
             color: #475569;
         }
 
-        /* Right Side: Amount Input (Walay box, limpyo) */
+        /* Right Side: Amount Input */
         .input-amount {
             width: 100%;
             background: transparent;
@@ -175,6 +249,7 @@
             display: flex;
             width: 100%;
             max-width: 440px;
+            gap: 10px;
         }
         .btn-action {
             flex: 1;
@@ -194,9 +269,42 @@
             background: #10b981;
             transform: translateY(-1px);
         }
+        .btn-secondary {
+            background: #1e293b;
+            border: 1px solid #334155;
+            box-shadow: none;
+        }
+        .btn-secondary:hover {
+            background: #334155;
+        }
     </style>
 </head>
 <body>
+
+<!-- Pattern Lock Screen -->
+<div id="lock-screen">
+    <div class="lock-container">
+        <div class="lock-title" id="lock-prompt">Draw Unlock Pattern</div>
+        <div class="pattern-grid" id="pattern-grid">
+            <svg id="pattern-svg">
+                <line id="current-line" x1="0" y1="0" x2="0" y2="0" stroke="#059669" stroke-width="4" stroke-linecap="round" style="display:none;"/>
+            </svg>
+            <div class="pattern-dot" data-index="0"></div>
+            <div class="pattern-dot" data-index="1"></div>
+            <div class="pattern-dot" data-index="2"></div>
+            <div class="pattern-dot" data-index="3"></div>
+            <div class="pattern-dot" data-index="4"></div>
+            <div class="pattern-dot" data-index="5"></div>
+            <div class="pattern-dot" data-index="6"></div>
+            <div class="pattern-dot" data-index="7"></div>
+            <div class="pattern-dot" data-index="8"></div>
+        </div>
+        <div class="lock-error" id="lock-error"></div>
+        <div class="pattern-actions">
+            <button class="btn-action btn-secondary" onclick="resetPatternInput()">Clear</button>
+        </div>
+    </div>
+</div>
 
 <div class="app-container">
     <!-- App-Style Balance Card -->
@@ -211,9 +319,10 @@
 
 <div class="actions-area">
     <button class="btn-action" onclick="addRow()">+ Add Account</button>
+    <button class="btn-action btn-secondary" onclick="changePattern()">Change Pattern</button>
 </div>
 
-<!-- Firebase SDKs & Real-time Smooth Sync Logic -->
+<!-- Firebase SDKs & App Logic -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
@@ -244,9 +353,172 @@
 
     window.fundsData = [];
     let saveTimeout = null;
-    let isInitialized = false;
 
-    // Smart Real-time listener: Dili moangot ug mo-sync dayon kung naay usbon sa pikas device
+    // Pattern Lock Logic variables
+    // Default pattern: '0,1,2,4,6,7,8' (U-shape / Z-shape sequence sa 0-8 dots)
+    let savedPattern = localStorage.getItem('fundsApp_pattern') || "0,1,2,4,6,7,8";
+    let selectedDots = [];
+    let isDrawing = false;
+    let isSettingNewPattern = false;
+    let tempNewPattern = "";
+
+    const grid = document.getElementById('pattern-grid');
+    const dots = document.querySelectorAll('.pattern-dot');
+    const svg = document.getElementById('pattern-svg');
+    const currentLine = document.getElementById('current-line');
+
+    function getDotCenter(dot) {
+        const rect = dot.getBoundingClientRect();
+        const gridRect = grid.getBoundingClientRect();
+        return {
+            x: rect.left + rect.width / 2 - gridRect.left,
+            y: rect.top + rect.height / 2 - gridRect.top
+        };
+    }
+
+    function redrawLines(sequence) {
+        // Kuhaa ang daang linya gawas sa current-line
+        const oldLines = svg.querySelectorAll('.permanent-line');
+        oldLines.forEach(l => l.remove());
+
+        for (let i = 0; i < sequence.length - 1; i++) {
+            let p1 = getDotCenter(dots[sequence[i]]);
+            let p2 = getDotCenter(dots[sequence[i+1]]);
+            let line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', p1.x);
+            line.setAttribute('y1', p1.y);
+            line.setAttribute('x2', p2.x);
+            line.setAttribute('y2', p2.y);
+            line.setAttribute('stroke', '#059669');
+            line.setAttribute('stroke-width', '4');
+            line.setAttribute('stroke-linecap', 'round');
+            line.classList.add('permanent-line');
+            svg.appendChild(line);
+        }
+    }
+
+    function startDraw(e) {
+        isDrawing = true;
+        selectedDots = [];
+        document.getElementById('lock-error').innerText = "";
+        dots.forEach(d => d.classList.remove('active'));
+        currentLine.style.display = 'none';
+        checkTouch(e);
+    }
+
+    function moveDraw(e) {
+        if (!isDrawing) return;
+        checkTouch(e);
+    }
+
+    function endDraw() {
+        if (!isDrawing) return;
+        isDrawing = false;
+        currentLine.style.display = 'none';
+
+        if (selectedDots.length > 0) {
+            verifyPattern(selectedDots.join(','));
+        }
+    }
+
+    function checkTouch(e) {
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+        dots.forEach((dot, index) => {
+            const rect = dot.getBoundingClientRect();
+            if (
+                clientX >= rect.left - 10 && clientX <= rect.right + 10 &&
+                clientY >= rect.top - 10 && clientY <= rect.bottom + 10
+            ) {
+                if (!selectedDots.includes(index)) {
+                    selectedDots.push(index);
+                    dot.classList.add('active');
+                    redrawLines(selectedDots);
+                }
+            }
+        });
+
+        if (selectedDots.length > 0) {
+            const lastDot = dots[selectedDots[selectedDots.length - 1]];
+            const p1 = getDotCenter(lastDot);
+            const gridRect = grid.getBoundingClientRect();
+            const x2 = clientX - gridRect.left;
+            const y2 = clientY - gridRect.top;
+
+            currentLine.setAttribute('x1', p1.x);
+            currentLine.setAttribute('y1', p1.y);
+            currentLine.setAttribute('x2', x2);
+            currentLine.setAttribute('y2', y2);
+            currentLine.style.display = 'block';
+        }
+    }
+
+    // Event listeners para sa Mouse ug Touch
+    grid.addEventListener('mousedown', startDraw);
+    window.addEventListener('mousemove', moveDraw);
+    window.addEventListener('mouseup', endDraw);
+
+    grid.addEventListener('touchstart', startDraw);
+    window.addEventListener('touchmove', moveDraw);
+    window.addEventListener('touchend', endDraw);
+
+    window.resetPatternInput = function() {
+        selectedDots = [];
+        dots.forEach(d => d.classList.remove('active'));
+        const oldLines = svg.querySelectorAll('.permanent-line');
+        oldLines.forEach(l => l.remove());
+        currentLine.style.display = 'none';
+    }
+
+    function verifyPattern(patternStr) {
+        if (!isSettingNewPattern) {
+            if (patternStr === savedPattern) {
+                document.getElementById('lock-screen').style.display = 'none';
+            } else {
+                document.getElementById('lock-error').innerText = "Incorrect pattern. Try again.";
+                setTimeout(resetPatternInput, 600);
+            }
+        } else {
+            if (!tempNewPattern) {
+                tempNewPattern = patternStr;
+                document.getElementById('lock-prompt').innerText = "Draw NEW Pattern Again to Confirm";
+                setTimeout(resetPatternInput, 400);
+            } else {
+                if (patternStr === tempNewPattern) {
+                    savedPattern = tempNewPattern;
+                    localStorage.setItem('fundsApp_pattern', savedPattern);
+                    alert("Pattern successfully changed!");
+                    isSettingNewPattern = false;
+                    tempNewPattern = "";
+                    document.getElementById('lock-prompt').innerText = "Draw Unlock Pattern";
+                    document.getElementById('lock-screen').style.display = 'none';
+                } else {
+                    document.getElementById('lock-error').innerText = "Patterns do not match. Start over.";
+                    tempNewPattern = "";
+                    document.getElementById('lock-prompt').innerText = "Draw NEW Pattern";
+                }
+                setTimeout(resetPatternInput, 600);
+            }
+        }
+    }
+
+    window.changePattern = function() {
+        let currentPrompt = prompt("Enter CURRENT unlock pattern as numbers (e.g. 0,1,2,4,6,7,8) or type your code:");
+        // Pwede sab ta mag-gamit og simple PIN confirmation sa prompt para mas dali:
+        if (currentPrompt === "1234" || currentPrompt === savedPattern || confirm("Proceed to change pattern?")) {
+            document.getElementById('lock-prompt').innerText = "Draw NEW Pattern";
+            document.getElementById('lock-error').innerText = "";
+            isSettingNewPattern = true;
+            tempNewPattern = "";
+            resetPatternInput();
+            document.getElementById('lock-screen').style.display = 'flex';
+        } else {
+            alert("Incorrect verification!");
+        }
+    }
+
+    // Smart Real-time listener
     onValue(fundsRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -268,10 +540,8 @@
             set(fundsRef, defaultData);
             renderTable();
         }
-        isInitialized = true;
     });
 
-    // Debounced Cloud Sync
     window.scheduleCloudSync = function() {
         localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(window.fundsData));
         clearTimeout(saveTimeout);

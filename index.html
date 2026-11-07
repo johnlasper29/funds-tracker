@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Bank Accounts Dashboard</title>
     <!-- Custom App Icons -->
     <link rel="apple-touch-icon" href="https://johnlasper29.github.io/funds-tracker/logo.png">
@@ -25,10 +25,10 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100dvh;
+            min-height: 100vh;
         }
 
-        /* Pattern Lock Screen Overlay - Gi-center og maayo para sa tanang devices */
+        /* Pattern Lock Screen Overlay - Gi-adjust aron parehas kadako sa iPhone sa bisan unsa nga device */
         #lock-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -38,7 +38,7 @@
             align-items: center;
             justify-content: center;
             z-index: 9999;
-            padding: 16px;
+            padding: 20px;
         }
         .lock-container {
             width: 100%;
@@ -50,7 +50,7 @@
             gap: 16px;
         }
         .welcome-user-text {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 700;
             color: #34d399;
             letter-spacing: -0.3px;
@@ -60,19 +60,19 @@
             font-weight: 500;
             color: #94a3b8;
             letter-spacing: 0.5px;
-            margin-top: -6px;
+            margin-top: -4px;
         }
         .pattern-grid {
             position: relative;
-            width: 290px;
-            height: 290px;
+            width: 280px;
+            height: 280px;
             background: #0f172a;
             border: 1px solid #1f2937;
             border-radius: 24px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            padding: 28px;
+            padding: 26px;
             touch-action: none;
             box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.6);
         }
@@ -105,6 +105,7 @@
             display: flex;
             gap: 10px;
             width: 100%;
+            max-width: 280px;
         }
 
         /* Main App Container */
@@ -450,8 +451,8 @@
         dots.forEach((dot, index) => {
             const rect = dot.getBoundingClientRect();
             if (
-                clientX >= rect.left - 14 && clientX <= rect.right + 14 &&
-                clientY >= rect.top - 14 && clientY <= rect.bottom + 14
+                clientX >= rect.left - 15 && clientX <= rect.right + 15 &&
+                clientY >= rect.top - 15 && clientY <= rect.bottom + 15
             ) {
                 if (!selectedDots.includes(index)) {
                     selectedDots.push(index);

@@ -284,7 +284,7 @@
 <!-- Pattern Lock Screen -->
 <div id="lock-screen">
     <div class="lock-container">
-        <div class="lock-title" id="lock-prompt">Draw Unlock Pattern</div>
+        <div class="lock-title" id="lock-prompt">Draw Your New Pattern</div>
         <div class="pattern-grid" id="pattern-grid">
             <svg id="pattern-svg">
                 <line id="current-line" x1="0" y1="0" x2="0" y2="0" stroke="#059669" stroke-width="4" stroke-linecap="round" style="display:none;"/>
@@ -354,18 +354,20 @@
     window.fundsData = [];
     let saveTimeout = null;
 
-    // Pattern Lock Logic variables
-    // Default pattern: '0,1,2,4,6,7,8' (U-shape / Z-shape sequence sa 0-8 dots)
-    let savedPattern = localStorage.getItem('fundsApp_pattern') || "0,1,2,4,6,7,8";
+    // Direct Setup: Bisan unsa ang unang i-draw nimo karon, maoy mahimong pattern mo!
+    let savedPattern = localStorage.getItem('fundsApp_pattern') || "";
     let selectedDots = [];
     let isDrawing = false;
-    let isSettingNewPattern = false;
-    let tempNewPattern = "";
+    let confirmStepPattern = "";
 
     const grid = document.getElementById('pattern-grid');
     const dots = document.querySelectorAll('.pattern-dot');
     const svg = document.getElementById('pattern-svg');
     const currentLine = document.getElementById('current-line');
+
+    if (!savedPattern) {
+        document.getElementById('lock-prompt').innerText = "Set Your New Pattern (Draw once)";
+    }
 
     function getDotCenter(dot) {
         const rect = dot.getBoundingClientRect();
@@ -377,7 +379,6 @@
     }
 
     function redrawLines(sequence) {
-        // Kuhaa ang daang linya gawas sa current-line
         const oldLines = svg.querySelectorAll('.permanent-line');
         oldLines.forEach(l => l.remove());
 
@@ -417,7 +418,7 @@
         currentLine.style.display = 'none';
 
         if (selectedDots.length > 0) {
-            verifyPattern(selectedDots.join(','));
+            handlePatternInput(selectedDots.join(','));
         }
     }
 
@@ -454,7 +455,6 @@
         }
     }
 
-    // Event listeners para sa Mouse ug Touch
     grid.addEventListener('mousedown', startDraw);
     window.addEventListener('mousemove', moveDraw);
     window.addEventListener('mouseup', endDraw);
@@ -471,50 +471,50 @@
         currentLine.style.display = 'none';
     }
 
-    function verifyPattern(patternStr) {
-        if (!isSettingNewPattern) {
+    function handlePatternInput(patternStr) {
+        if (!savedPattern) {
+            // Kung wala pay nake-save, himuon kini nga pinakabag-ong pattern
+            if (patternStr.split(',').length < 3) {
+                document.getElementById('lock-error').innerText = "Connect at least 3 dots!";
+                setTimeout(resetPatternInput, 600);
+                return;
+            }
+            if (!confirmStepPattern) {
+                confirmStepPattern = patternStr;
+                document.getElementById('lock-prompt').innerText = "Draw Pattern Again to Confirm";
+                setTimeout(resetPatternInput, 400);
+            } else {
+                if (patternStr === confirmStepPattern) {
+                    savedPattern = confirmStepPattern;
+                    localStorage.setItem('fundsApp_pattern', savedPattern);
+                    alert("Pattern saved successfully!");
+                    document.getElementById('lock-screen').style.display = 'none';
+                } else {
+                    document.getElementById('lock-error').innerText = "Patterns do not match. Start over.";
+                    confirmStepPattern = "";
+                    document.getElementById('lock-prompt').innerText = "Set Your New Pattern";
+                }
+                setTimeout(resetPatternInput, 600);
+            }
+        } else {
+            // Normal Unlock mode
             if (patternStr === savedPattern) {
                 document.getElementById('lock-screen').style.display = 'none';
             } else {
                 document.getElementById('lock-error').innerText = "Incorrect pattern. Try again.";
                 setTimeout(resetPatternInput, 600);
             }
-        } else {
-            if (!tempNewPattern) {
-                tempNewPattern = patternStr;
-                document.getElementById('lock-prompt').innerText = "Draw NEW Pattern Again to Confirm";
-                setTimeout(resetPatternInput, 400);
-            } else {
-                if (patternStr === tempNewPattern) {
-                    savedPattern = tempNewPattern;
-                    localStorage.setItem('fundsApp_pattern', savedPattern);
-                    alert("Pattern successfully changed!");
-                    isSettingNewPattern = false;
-                    tempNewPattern = "";
-                    document.getElementById('lock-prompt').innerText = "Draw Unlock Pattern";
-                    document.getElementById('lock-screen').style.display = 'none';
-                } else {
-                    document.getElementById('lock-error').innerText = "Patterns do not match. Start over.";
-                    tempNewPattern = "";
-                    document.getElementById('lock-prompt').innerText = "Draw NEW Pattern";
-                }
-                setTimeout(resetPatternInput, 600);
-            }
         }
     }
 
     window.changePattern = function() {
-        let currentPrompt = prompt("Enter CURRENT unlock pattern as numbers (e.g. 0,1,2,4,6,7,8) or type your code:");
-        // Pwede sab ta mag-gamit og simple PIN confirmation sa prompt para mas dali:
-        if (currentPrompt === "1234" || currentPrompt === savedPattern || confirm("Proceed to change pattern?")) {
-            document.getElementById('lock-prompt').innerText = "Draw NEW Pattern";
-            document.getElementById('lock-error').innerText = "";
-            isSettingNewPattern = true;
-            tempNewPattern = "";
+        if (confirm("Do you want to reset and create a NEW unlock pattern?")) {
+            localStorage.removeItem('fundsApp_pattern');
+            savedPattern = "";
+            confirmStepPattern = "";
+            document.getElementById('lock-prompt').innerText = "Draw Your NEW Pattern";
             resetPatternInput();
             document.getElementById('lock-screen').style.display = 'flex';
-        } else {
-            alert("Incorrect verification!");
         }
     }
 

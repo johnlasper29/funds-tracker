@@ -239,29 +239,29 @@
     ];
 
     window.fundsData = [];
-    let isRemoteUpdate = false;
+    let isInitialLoad = true;
 
-    // Real-time listener gikan sa Firebase Cloud
+    // Load data from Firebase once or listen safely without breaking active typing
     onValue(fundsRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            window.fundsData = data;
-            localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(data));
+            if (isInitialLoad) {
+                window.fundsData = data;
+                renderTable();
+                isInitialLoad = false;
+            }
         } else {
-            // Kung walay pa sulod sa database, i-save ang default data
             window.fundsData = defaultData;
             set(fundsRef, defaultData);
+            renderTable();
         }
-        renderTable();
-    });
+    }, { onlyOnce: true }); // Gigamit ang onlyOnce aron dili mag-sige og refresh samtang nag-type ka
 
-    window.saveData = function() {
+    window.saveDataToCloud = function() {
         localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(window.fundsData));
-        // I-push dayon ang pag-usab sa Firebase
-        set(fundsRef, window.fundsData)
-            .catch((error) => {
-                console.error("Error sa pag-sync:", error);
-            });
+        set(fundsRef, window.fundsData).catch((error) => {
+            console.error("Error sa pag-sync:", error);
+        });
     }
 
     window.formatNumber = function(num) {
@@ -326,9 +326,9 @@
             rowDiv.innerHTML = `
                 <div class="name-input-wrapper" id="wrapper-${index}" style="border-left-color: ${brand.color};">
                     <div class="brand-icon" id="icon-${index}" style="fill: ${brand.color};">${brand.icon}</div>
-                    <input type="text" class="input-name" value="${item.name}" placeholder="Account name..." oninput="updateItemName(${index}, this)">
+                    <input type="text" class="input-name" value="${item.name || ''}" placeholder="Account name..." oninput="updateItemName(${index}, this)" onblur="saveDataToCloud()">
                 </div>
-                <input type="text" class="input-amount" value="${item.amount}" placeholder="0" oninput="handleAmountInput(${index}, this)" onblur="formatAmountBlur(${index}, this)">
+                <input type="text" class="input-amount" value="${item.amount || ''}" placeholder="0" oninput="handleAmountInput(${index}, this)" onblur="formatAmountBlur(${index}, this)">
                 <button class="btn-delete-row" onclick="deleteRow(${index})" title="Delete account">×</button>
             `;
             container.appendChild(rowDiv);
@@ -345,17 +345,19 @@
         let wrapper = document.getElementById(`wrapper-${index}`);
         let icon = document.getElementById(`icon-${index}`);
         
-        rowEl.style.background = brand.bg;
-        wrapper.style.borderLeftColor = brand.color;
-        icon.style.fill = brand.color;
-        icon.innerHTML = brand.icon;
-
-        saveData();
+        if(rowEl) rowEl.style.background = brand.bg;
+        if(wrapper) wrapper.style.borderLeftColor = brand.color;
+        if(icon) {
+            icon.style.fill = brand.color;
+            icon.innerHTML = brand.icon;
+        }
+        
+        localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(window.fundsData));
     }
 
     window.handleAmountInput = function(index, inputEl) {
         window.fundsData[index]['amount'] = inputEl.value;
-        saveData();
+        localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(window.fundsData));
         calculateGrandTotal();
     }
 
@@ -366,10 +368,11 @@
             if (num > 0 || rawVal === "0") {
                 inputEl.value = formatNumber(num);
                 window.fundsData[index]['amount'] = inputEl.value;
-                saveData();
             }
         }
+        localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(window.fundsData));
         calculateGrandTotal();
+        saveDataToCloud(); // Mo-sync ra sa cloud human og type o human og gawas sa input box
     }
 
     window.calculateGrandTotal = function() {
@@ -382,13 +385,13 @@
 
     window.addRow = function() {
         window.fundsData.push({ name: "", amount: "" });
-        saveData();
+        saveDataToCloud();
         renderTable();
     }
 
     window.deleteRow = function(index) {
         window.fundsData.splice(index, 1);
-        saveData();
+        saveDataToCloud();
         renderTable();
     }
 </script>

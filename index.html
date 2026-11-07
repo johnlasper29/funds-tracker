@@ -29,7 +29,7 @@
             min-height: 100vh;
         }
 
-        /* Pattern Lock Screen Overlay - Gi-adjust aron dako ug hayahay sa tanang mobile view */
+        /* Pattern Lock Screen Overlay - Gi-dako ug gi-lapan ang grid aron dili sikit */
         #lock-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -43,12 +43,12 @@
         }
         .lock-container {
             width: 100%;
-            max-width: 320px;
+            max-width: 360px;
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 14px;
+            gap: 18px;
         }
         .welcome-user-text {
             font-size: 20px;
@@ -64,31 +64,32 @@
         }
         .pattern-grid {
             position: relative;
-            width: 270px;
-            height: 270px;
+            width: 320px;
+            height: 320px;
             background: #0f172a;
             border: 1px solid #1f2937;
-            border-radius: 24px;
+            border-radius: 28px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            padding: 24px;
+            padding: 28px;
             touch-action: none;
             box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.6);
         }
         .pattern-dot {
-            width: 26px;
-            height: 26px;
+            width: 34px;
+            height: 34px;
             background: #334155;
             border-radius: 50%;
             margin: auto;
             position: relative;
             transition: transform 0.2s, background 0.2s;
+            pointer-events: none; /* Gitugyan sa grid ang touch aron hapsay ang pagdagan */
         }
         .pattern-dot.active {
             background: #059669;
-            transform: scale(1.35);
-            box-shadow: 0 0 15px rgba(5, 150, 105, 0.7);
+            transform: scale(1.4);
+            box-shadow: 0 0 18px rgba(5, 150, 105, 0.8);
         }
         #pattern-svg {
             position: absolute;
@@ -105,7 +106,7 @@
             display: flex;
             gap: 10px;
             width: 100%;
-            max-width: 270px;
+            max-width: 320px;
         }
 
         /* Main App Container */
@@ -413,7 +414,7 @@
             line.setAttribute('x2', p2.x);
             line.setAttribute('y2', p2.y);
             line.setAttribute('stroke', '#059669');
-            line.setAttribute('stroke-width', '4');
+            line.setAttribute('stroke-width', '5');
             line.setAttribute('stroke-linecap', 'round');
             line.classList.add('permanent-line');
             svg.appendChild(line);
@@ -426,6 +427,12 @@
         document.getElementById('lock-error').innerText = "";
         dots.forEach(d => d.classList.remove('active'));
         currentLine.style.display = 'none';
+        
+        // Giprotektahan ang touch aron dili maputol bisan og makagawas gamay sa grid
+        if (e.target && e.target.setPointerCapture && e.pointerId) {
+            try { e.target.setPointerCapture(e.pointerId); } catch(err) {}
+        }
+        
         checkTouch(e);
     }
 
@@ -434,10 +441,14 @@
         checkTouch(e);
     }
 
-    function endDraw() {
+    function endDraw(e) {
         if (!isDrawing) return;
         isDrawing = false;
         currentLine.style.display = 'none';
+
+        if (e && e.target && e.target.releasePointerCapture && e.pointerId) {
+            try { e.target.releasePointerCapture(e.pointerId); } catch(err) {}
+        }
 
         if (selectedDots.length > 0) {
             handlePatternInput(selectedDots.join(','));
@@ -445,14 +456,19 @@
     }
 
     function checkTouch(e) {
-        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        // Gisuportahan pareho ang mouse ug touch events nga hapsay
+        const clientX = e.clientX !== undefined ? e.clientX : (e.touches ? e.touches[0].clientX : 0);
+        const clientY = e.clientY !== undefined ? e.clientY : (e.touches ? e.touches[0].clientY : 0);
+
+        if (!clientX && !clientY) return;
 
         dots.forEach((dot, index) => {
             const rect = dot.getBoundingClientRect();
+            // Gilapdan ang hit radius sa dot aron daling madakpan bisan og paspas ang pagdrowing
+            const hitPadding = 24; 
             if (
-                clientX >= rect.left - 16 && clientX <= rect.right + 16 &&
-                clientY >= rect.top - 16 && clientY <= rect.bottom + 16
+                clientX >= rect.left - hitPadding && clientX <= rect.right + hitPadding &&
+                clientY >= rect.top - hitPadding && clientY <= rect.bottom + hitPadding
             ) {
                 if (!selectedDots.includes(index)) {
                     selectedDots.push(index);
@@ -477,13 +493,11 @@
         }
     }
 
-    grid.addEventListener('mousedown', startDraw);
-    window.addEventListener('mousemove', moveDraw);
-    window.addEventListener('mouseup', endDraw);
-
-    grid.addEventListener('touchstart', startDraw);
-    window.addEventListener('touchmove', moveDraw);
-    window.addEventListener('touchend', endDraw);
+    // Gigamit ang pointer events aron mas lig-on ug dili maputol ang drowing sa mobile
+    grid.addEventListener('pointerdown', startDraw);
+    grid.addEventListener('pointermove', moveDraw);
+    grid.addEventListener('pointerup', endDraw);
+    grid.addEventListener('pointercancel', endDraw);
 
     window.resetPatternInput = function() {
         selectedDots = [];

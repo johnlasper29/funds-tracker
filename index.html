@@ -209,7 +209,7 @@
     <button class="btn-action" onclick="addRow()">+ Add Account</button>
 </div>
 
-<!-- Firebase SDKs & Real-time Sync Logic -->
+<!-- Firebase SDKs & Real-time Smooth Sync Logic -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
     import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-database.js";
@@ -239,29 +239,45 @@
     ];
 
     window.fundsData = [];
-    let isInitialLoad = true;
+    let saveTimeout = null;
+    let isInitialized = false;
 
-    // Load data from Firebase once or listen safely without breaking active typing
+    // Smart Real-time listener: Dili moangot ug mo-sync dayon kung naay usbon sa pikas device
     onValue(fundsRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
-            if (isInitialLoad) {
+            // Susiha kung naay aktibong gi-type ang user karon sa screen
+            let activeEl = document.activeElement;
+            let isUserTyping = activeEl && (activeEl.classList.contains('input-name') || activeEl.classList.contains('input-amount'));
+
+            // Kung lahi ang data gikan sa cloud ug dili ang user ang kasamtangang ga-type
+            if (JSON.stringify(data) !== JSON.stringify(window.fundsData)) {
                 window.fundsData = data;
-                renderTable();
-                isInitialLoad = false;
+                localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(data));
+                
+                if (!isUserTyping) {
+                    renderTable();
+                } else {
+                    calculateGrandTotal(); // I-update lang ang total kung ga-type pa para hapsay gihapon
+                }
             }
         } else {
             window.fundsData = defaultData;
             set(fundsRef, defaultData);
             renderTable();
         }
-    }, { onlyOnce: true }); // Gigamit ang onlyOnce aron dili mag-sige og refresh samtang nag-type ka
+        isInitialized = true;
+    });
 
-    window.saveDataToCloud = function() {
+    // Debounced Cloud Sync: Dili ma-hang ang app kay maghulat gamay sa paghunong og type sa dili pa i-push sa cloud
+    window.scheduleCloudSync = function() {
         localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(window.fundsData));
-        set(fundsRef, window.fundsData).catch((error) => {
-            console.error("Error sa pag-sync:", error);
-        });
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            set(fundsRef, window.fundsData).catch((error) => {
+                console.error("Error sa pag-sync:", error);
+            });
+        }, 300); // Mo-sync dayon 300ms human nimo og type
     }
 
     window.formatNumber = function(num) {
@@ -326,7 +342,7 @@
             rowDiv.innerHTML = `
                 <div class="name-input-wrapper" id="wrapper-${index}" style="border-left-color: ${brand.color};">
                     <div class="brand-icon" id="icon-${index}" style="fill: ${brand.color};">${brand.icon}</div>
-                    <input type="text" class="input-name" value="${item.name || ''}" placeholder="Account name..." oninput="updateItemName(${index}, this)" onblur="saveDataToCloud()">
+                    <input type="text" class="input-name" value="${item.name || ''}" placeholder="Account name..." oninput="updateItemName(${index}, this)">
                 </div>
                 <input type="text" class="input-amount" value="${item.amount || ''}" placeholder="0" oninput="handleAmountInput(${index}, this)" onblur="formatAmountBlur(${index}, this)">
                 <button class="btn-delete-row" onclick="deleteRow(${index})" title="Delete account">×</button>
@@ -351,14 +367,14 @@
             icon.style.fill = brand.color;
             icon.innerHTML = brand.icon;
         }
-        
-        localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(window.fundsData));
+
+        scheduleCloudSync();
     }
 
     window.handleAmountInput = function(index, inputEl) {
         window.fundsData[index]['amount'] = inputEl.value;
-        localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(window.fundsData));
         calculateGrandTotal();
+        scheduleCloudSync();
     }
 
     window.formatAmountBlur = function(index, inputEl) {
@@ -368,11 +384,10 @@
             if (num > 0 || rawVal === "0") {
                 inputEl.value = formatNumber(num);
                 window.fundsData[index]['amount'] = inputEl.value;
+                scheduleCloudSync();
             }
         }
-        localStorage.setItem('bankAppTracker_lighter_data', JSON.stringify(window.fundsData));
         calculateGrandTotal();
-        saveDataToCloud(); // Mo-sync ra sa cloud human og type o human og gawas sa input box
     }
 
     window.calculateGrandTotal = function() {
@@ -385,13 +400,13 @@
 
     window.addRow = function() {
         window.fundsData.push({ name: "", amount: "" });
-        saveDataToCloud();
+        scheduleCloudSync();
         renderTable();
     }
 
     window.deleteRow = function(index) {
         window.fundsData.splice(index, 1);
-        saveDataToCloud();
+        scheduleCloudSync();
         renderTable();
     }
 </script>

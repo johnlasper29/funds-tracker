@@ -42,35 +42,44 @@
         }
         .lock-container {
             width: 100%;
-            max-width: 320px;
+            max-width: 360px;
             text-align: center;
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 16px;
+            gap: 20px;
+        }
+        .welcome-user-text {
+            font-size: 20px;
+            font-weight: 700;
+            color: #34d399;
+            letter-spacing: -0.3px;
+            margin-bottom: -4px;
         }
         .lock-title {
-            font-size: 16px;
-            font-weight: 600;
-            color: #f3f4f6;
+            font-size: 15px;
+            font-weight: 500;
+            color: #94a3b8;
             letter-spacing: 0.5px;
         }
+        /* Gi-padak-an ang grid size ug padding aron dili sikit */
         .pattern-grid {
             position: relative;
-            width: 260px;
-            height: 260px;
+            width: 310px;
+            height: 310px;
             background: #0f172a;
             border: 1px solid #1f2937;
-            border-radius: 20px;
+            border-radius: 24px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            padding: 24px;
+            padding: 32px;
             touch-action: none;
+            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.6);
         }
         .pattern-dot {
-            width: 24px;
-            height: 24px;
+            width: 28px;
+            height: 28px;
             background: #334155;
             border-radius: 50%;
             margin: auto;
@@ -79,8 +88,8 @@
         }
         .pattern-dot.active {
             background: #059669;
-            transform: scale(1.3);
-            box-shadow: 0 0 12px rgba(5, 150, 105, 0.6);
+            transform: scale(1.35);
+            box-shadow: 0 0 15px rgba(5, 150, 105, 0.7);
         }
         #pattern-svg {
             position: absolute;
@@ -284,6 +293,7 @@
 <!-- Pattern Lock Screen -->
 <div id="lock-screen">
     <div class="lock-container">
+        <div class="welcome-user-text">Welcome Back, John Lasper</div>
         <div class="lock-title" id="lock-prompt">Loading Security...</div>
         <div class="pattern-grid" id="pattern-grid">
             <svg id="pattern-svg">
@@ -377,7 +387,6 @@
                 lockPrompt.innerText = "Draw Unlock Pattern";
             }
         } else {
-            // Kung wala pa sa cloud, mag-set ta og bag-ong pattern
             cloudPattern = "";
             lockPrompt.innerText = "Set Your New Pattern (Draw once)";
         }
@@ -443,8 +452,8 @@
         dots.forEach((dot, index) => {
             const rect = dot.getBoundingClientRect();
             if (
-                clientX >= rect.left - 10 && clientX <= rect.right + 10 &&
-                clientY >= rect.top - 10 && clientY <= rect.bottom + 10
+                clientX >= rect.left - 12 && clientX <= rect.right + 12 &&
+                clientY >= rect.top - 12 && clientY <= rect.bottom + 12
             ) {
                 if (!selectedDots.includes(index)) {
                     selectedDots.push(index);
@@ -487,7 +496,6 @@
 
     function handlePatternInput(patternStr) {
         if (!cloudPattern || isSettingMode) {
-            // Pag-set o pag-ilis og bag-ong pattern
             if (patternStr.split(',').length < 3) {
                 document.getElementById('lock-error').innerText = "Connect at least 3 dots!";
                 setTimeout(resetPatternInput, 600);
@@ -499,7 +507,6 @@
                 setTimeout(resetPatternInput, 400);
             } else {
                 if (patternStr === confirmStepPattern) {
-                    // I-save diretso sa Firebase cloud aron ma-sync sa tanan devices
                     set(settingsRef, { pattern: confirmStepPattern }).then(() => {
                         alert("Pattern saved & synced to all devices!");
                         isSettingMode = false;
@@ -513,7 +520,6 @@
                 setTimeout(resetPatternInput, 600);
             }
         } else {
-            // Unlock mode
             if (patternStr === cloudPattern) {
                 lockScreen.style.display = 'none';
             } else {

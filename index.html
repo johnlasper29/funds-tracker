@@ -162,11 +162,11 @@
         /* Individual Account Item Card */
         .row-item {
             display: grid;
-            grid-template-columns: 1fr 140px 36px;
+            grid-template-columns: 1fr 130px 36px;
             align-items: center;
             border: 1px solid #1f2937;
             border-radius: 12px;
-            padding: 10px 14px;
+            padding: 10px 12px;
             transition: all 0.2s ease;
             position: relative;
             overflow: hidden;
@@ -179,9 +179,9 @@
         .name-input-wrapper {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 8px;
             border-left: 4px solid #334155;
-            padding-left: 10px;
+            padding-left: 8px;
             height: 36px;
             border-radius: 4px;
             transition: all 0.3s ease;
@@ -202,6 +202,7 @@
             transition: fill 0.3s ease;
         }
 
+        /* Dynamic Font Size Name Input */
         .input-name {
             width: 100%;
             background: transparent;
@@ -210,13 +211,13 @@
             font-size: 15px;
             font-weight: 600;
             outline: none;
-            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .input-name::placeholder {
             color: #475569;
         }
 
-        /* Right Side: Amount Input - Gi-optimize ang font scaling ug sizing aron dili maputol */
+        /* Dynamic Font Size Amount Input */
         .input-amount {
             width: 100%;
             background: transparent;
@@ -225,11 +226,9 @@
             font-size: 16px;
             font-weight: 600;
             text-align: right;
-            padding: 8px 4px;
+            padding: 8px 2px;
             outline: none;
             transition: color 0.2s ease;
-            overflow: hidden;
-            text-overflow: ellipsis;
             white-space: nowrap;
         }
         .input-amount:focus {
@@ -624,14 +623,28 @@
         return isNaN(parsed) ? 0 : parsed;
     }
 
-    // Function para ma-adjust ang font size sa amount input base sa gitas-on sa text
-    window.adjustAmountFontSize = function(inputEl) {
-        let length = inputEl.value.length;
-        if (length > 12) {
+    // Dynamic Font Adjustment para sa NAME input
+    window.adjustNameFontSize = function(inputEl) {
+        let len = inputEl.value.length;
+        if (len > 16) {
             inputEl.style.fontSize = "11px";
-        } else if (length > 9) {
+        } else if (len > 13) {
+            inputEl.style.fontSize = "12px";
+        } else if (len > 10) {
             inputEl.style.fontSize = "13px";
-        } else if (length > 7) {
+        } else {
+            inputEl.style.fontSize = "15px";
+        }
+    }
+
+    // Dynamic Font Adjustment para sa AMOUNT input
+    window.adjustAmountFontSize = function(inputEl) {
+        let len = inputEl.value.length;
+        if (len > 11) {
+            inputEl.style.fontSize = "11px";
+        } else if (len > 8) {
+            inputEl.style.fontSize = "13px";
+        } else if (len > 6) {
             inputEl.style.fontSize = "14px";
         } else {
             inputEl.style.fontSize = "16px";
@@ -692,7 +705,7 @@
             rowDiv.innerHTML = `
                 <div class="name-input-wrapper" id="wrapper-${index}" style="border-left-color: ${brand.color};">
                     <div class="brand-icon" id="icon-${index}" style="fill: ${brand.color};">${brand.icon}</div>
-                    <input type="text" class="input-name" value="${item.name || ''}" placeholder="Account name..." oninput="updateItemName(${index}, this)">
+                    <input type="text" class="input-name" id="name-${index}" value="${item.name || ''}" placeholder="Account name..." oninput="updateItemName(${index}, this)">
                 </div>
                 <input type="text" class="input-amount" id="amount-${index}" value="${item.amount || ''}" placeholder="0" 
                     onfocus="handleAmountFocus(this)" 
@@ -702,11 +715,11 @@
             `;
             container.appendChild(rowDiv);
             
-            // I-adjust dayon ang font size sa amount kung naa naysulod
-            let amountInput = document.getElementById(`amount-${index}`);
-            if (amountInput) {
-                adjustAmountFontSize(amountInput);
-            }
+            // Auto-adjust font size sa name ug amount pag-render
+            let nameInp = document.getElementById(`name-${index}`);
+            let amountInp = document.getElementById(`amount-${index}`);
+            if (nameInp) adjustNameFontSize(nameInp);
+            if (amountInp) adjustAmountFontSize(amountInp);
         });
 
         calculateGrandTotal();
@@ -725,8 +738,9 @@
 
     window.updateItemName = function(index, inputEl) {
         window.fundsData[index]['name'] = inputEl.value;
+        adjustNameFontSize(inputEl);
+
         let brand = getBrandInfo(inputEl.value);
-        
         let rowEl = inputEl.closest('.row-item');
         let wrapper = document.getElementById(`wrapper-${index}`);
         let icon = document.getElementById(`icon-${index}`);
@@ -770,7 +784,6 @@
         let grandTotalEl = document.getElementById('grand-total');
         grandTotalEl.innerText = formatNumber(total);
         
-        // Auto-adjust sad ang font size sa Grand Total kung dako na kaayo ang total funds
         let length = grandTotalEl.innerText.length;
         if (length > 12) {
             grandTotalEl.style.fontSize = "22px";

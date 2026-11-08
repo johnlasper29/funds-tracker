@@ -668,9 +668,10 @@
                 icon: `<svg viewBox="0 0 24 24"><path d="M11.5 1L2 6v2h19V6m-9.5 4c-3.87 0-7 3.13-7 7s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7m0 12c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>`
             };
         } else if (lower.includes('maya')) {
+            // Gi-ilisan nako og Neon Violet ang Maya Business
             return {
-                color: '#22d3ee',
-                bg: 'linear-gradient(90deg, rgba(34, 211, 238, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
+                color: '#c084fc',
+                bg: 'linear-gradient(90deg, rgba(192, 132, 252, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
                 icon: `<svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`
             };
         } else if (lower.includes('cash')) {
@@ -707,7 +708,9 @@
                     <div class="brand-icon" id="icon-${index}" style="fill: ${brand.color};">${brand.icon}</div>
                     <input type="text" class="input-name" id="name-${index}" value="${item.name || ''}" placeholder="Account name..." oninput="updateItemName(${index}, this)">
                 </div>
+                <!-- Gi-dugtangan og inputmode="numeric" ug pattern="[0-9]*" aron mo-automatic og numpad keyboard sa mobile -->
                 <input type="text" class="input-amount" id="amount-${index}" value="${item.amount || ''}" placeholder="0" 
+                    inputmode="numeric" pattern="[0-9]*"
                     onfocus="handleAmountFocus(this)" 
                     oninput="handleAmountInput(${index}, this)" 
                     onblur="formatAmountBlur(${index}, this)">
@@ -754,7 +757,6 @@
         scheduleCloudSync();
     }
 
-    // Gitul-id aron automatic mo-apply ang comma samtang nag-type ka sa amount
     window.handleAmountInput = function(index, inputEl) {
         let rawVal = inputEl.value.replace(/,/g, '');
         if (!isNaN(rawVal) && rawVal !== "") {

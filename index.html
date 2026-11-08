@@ -367,7 +367,7 @@
     ];
 
     window.fundsData = [];
-    let deletedItemCache = null; // Para sa Undo feature
+    let deletedItemCache = null;
     let saveTimeout = null;
 
     let cloudPattern = "";
@@ -553,8 +553,31 @@
     }
 
     onValue(fundsRef, (snapshot) => {
-        const data = snapshot.val();
+        let data = snapshot.val();
         if (data) {
+            // Siguruhon nga naay Cash, GCash, MariBank, ug Maya Business sa saktong han-ay
+            let names = data.map(item => item.name ? item.name.toLowerCase().trim() : "");
+            
+            let hasCash = names.includes("cash");
+            let hasGcash = names.includes("gcash");
+            let hasMaribank = names.includes("maribank");
+            let hasMaya = names.includes("maya business");
+
+            if (!hasCash || !hasGcash || !hasMaribank || !hasMaya) {
+                let cashObj = data.find(i => i.name && i.name.toLowerCase().trim() === "cash") || { name: "Cash", amount: "0" };
+                let gcashObj = data.find(i => i.name && i.name.toLowerCase().trim() === "gcash") || { name: "GCash", amount: "0" };
+                let maribankObj = data.find(i => i.name && i.name.toLowerCase().trim() === "maribank") || { name: "MariBank", amount: "0" };
+                let mayaObj = data.find(i => i.name && i.name.toLowerCase().trim() === "maya business") || { name: "Maya Business", amount: "0" };
+
+                let others = data.filter(i => {
+                    let n = i.name ? i.name.toLowerCase().trim() : "";
+                    return n !== "cash" && n !== "gcash" && n !== "maribank" && n !== "maya business";
+                });
+
+                data = [cashObj, gcashObj, maribankObj, mayaObj, ...others];
+                set(fundsRef, data); // I-update sa Firebase ang kumpletong han-ay
+            }
+
             let activeEl = document.activeElement;
             let isUserTyping = activeEl && (activeEl.classList.contains('input-name') || activeEl.classList.contains('input-amount'));
 
@@ -664,7 +687,6 @@
         calculateGrandTotal();
     }
 
-    // Inig click/focus sa amount, awtomatikong ma-select ang tibuok numero para dali mailisan
     window.handleAmountFocus = function(inputEl) {
         setTimeout(() => {
             inputEl.select();
@@ -728,7 +750,7 @@
 
     window.deleteRow = function(index) {
         let removed = window.fundsData.splice(index, 1)[0];
-        deletedItemCache = removed; // I-save sa cache para ma-undo
+        deletedItemCache = removed;
         
         let undoBtn = document.getElementById('btn-undo');
         if(undoBtn) {

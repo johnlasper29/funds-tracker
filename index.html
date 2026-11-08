@@ -149,6 +149,7 @@
             font-weight: 700;
             color: #34d399;
             letter-spacing: -0.5px;
+            word-break: break-all;
         }
 
         /* Accounts List Container */
@@ -161,7 +162,7 @@
         /* Individual Account Item Card */
         .row-item {
             display: grid;
-            grid-template-columns: 1fr 130px 36px;
+            grid-template-columns: 1fr 140px 36px;
             align-items: center;
             border: 1px solid #1f2937;
             border-radius: 12px;
@@ -184,6 +185,7 @@
             height: 36px;
             border-radius: 4px;
             transition: all 0.3s ease;
+            overflow: hidden;
         }
 
         .brand-icon {
@@ -208,23 +210,27 @@
             font-size: 15px;
             font-weight: 600;
             outline: none;
+            text-overflow: ellipsis;
         }
         .input-name::placeholder {
             color: #475569;
         }
 
-        /* Right Side: Amount Input */
+        /* Right Side: Amount Input - Gi-optimize ang font scaling ug sizing aron dili maputol */
         .input-amount {
             width: 100%;
             background: transparent;
             border: none;
             color: #f3f4f6;
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 600;
             text-align: right;
             padding: 8px 4px;
             outline: none;
             transition: color 0.2s ease;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .input-amount:focus {
             color: #34d399;
@@ -555,7 +561,6 @@
     onValue(fundsRef, (snapshot) => {
         let data = snapshot.val();
         if (data) {
-            // Siguruhon nga naay Cash, GCash, MariBank, ug Maya Business sa saktong han-ay
             let names = data.map(item => item.name ? item.name.toLowerCase().trim() : "");
             
             let hasCash = names.includes("cash");
@@ -575,7 +580,7 @@
                 });
 
                 data = [cashObj, gcashObj, maribankObj, mayaObj, ...others];
-                set(fundsRef, data); // I-update sa Firebase ang kumpletong han-ay
+                set(fundsRef, data);
             }
 
             let activeEl = document.activeElement;
@@ -617,6 +622,20 @@
         let clean = val.toString().replace(/,/g, '');
         let parsed = parseFloat(clean);
         return isNaN(parsed) ? 0 : parsed;
+    }
+
+    // Function para ma-adjust ang font size sa amount input base sa gitas-on sa text
+    window.adjustAmountFontSize = function(inputEl) {
+        let length = inputEl.value.length;
+        if (length > 12) {
+            inputEl.style.fontSize = "11px";
+        } else if (length > 9) {
+            inputEl.style.fontSize = "13px";
+        } else if (length > 7) {
+            inputEl.style.fontSize = "14px";
+        } else {
+            inputEl.style.fontSize = "16px";
+        }
     }
 
     window.getBrandInfo = function(name) {
@@ -675,13 +694,19 @@
                     <div class="brand-icon" id="icon-${index}" style="fill: ${brand.color};">${brand.icon}</div>
                     <input type="text" class="input-name" value="${item.name || ''}" placeholder="Account name..." oninput="updateItemName(${index}, this)">
                 </div>
-                <input type="text" class="input-amount" value="${item.amount || ''}" placeholder="0" 
+                <input type="text" class="input-amount" id="amount-${index}" value="${item.amount || ''}" placeholder="0" 
                     onfocus="handleAmountFocus(this)" 
                     oninput="handleAmountInput(${index}, this)" 
                     onblur="formatAmountBlur(${index}, this)">
                 ${isProtected ? `<div style="width: 32px;"></div>` : `<button class="btn-delete-row" onclick="deleteRow(${index})" title="Delete account">×</button>`}
             `;
             container.appendChild(rowDiv);
+            
+            // I-adjust dayon ang font size sa amount kung naa naysulod
+            let amountInput = document.getElementById(`amount-${index}`);
+            if (amountInput) {
+                adjustAmountFontSize(amountInput);
+            }
         });
 
         calculateGrandTotal();
@@ -695,6 +720,7 @@
         if (raw !== "0") {
             inputEl.value = raw;
         }
+        adjustAmountFontSize(inputEl);
     }
 
     window.updateItemName = function(index, inputEl) {
@@ -717,6 +743,7 @@
 
     window.handleAmountInput = function(index, inputEl) {
         window.fundsData[index]['amount'] = inputEl.value;
+        adjustAmountFontSize(inputEl);
         calculateGrandTotal();
         scheduleCloudSync();
     }
@@ -731,6 +758,7 @@
                 scheduleCloudSync();
             }
         }
+        adjustAmountFontSize(inputEl);
         calculateGrandTotal();
     }
 
@@ -739,7 +767,18 @@
         window.fundsData.forEach(item => {
             total += parseNum(item.amount);
         });
-        document.getElementById('grand-total').innerText = formatNumber(total);
+        let grandTotalEl = document.getElementById('grand-total');
+        grandTotalEl.innerText = formatNumber(total);
+        
+        // Auto-adjust sad ang font size sa Grand Total kung dako na kaayo ang total funds
+        let length = grandTotalEl.innerText.length;
+        if (length > 12) {
+            grandTotalEl.style.fontSize = "22px";
+        } else if (length > 9) {
+            grandTotalEl.style.fontSize = "26px";
+        } else {
+            grandTotalEl.style.fontSize = "32px";
+        }
     }
 
     window.addRow = function() {

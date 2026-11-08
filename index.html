@@ -326,7 +326,7 @@
     <!-- App-Style Balance Card -->
     <div class="balance-card">
         <div class="balance-title">Total Available Funds</div>
-        <div class="balance-amount" id="grand-total">0</div>
+        <div class="balance-amount" id="grand-total">₱0</div>
     </div>
 
     <!-- Accounts List -->
@@ -715,7 +715,6 @@
             `;
             container.appendChild(rowDiv);
             
-            // Auto-adjust font size sa name ug amount pag-render
             let nameInp = document.getElementById(`name-${index}`);
             let amountInp = document.getElementById(`amount-${index}`);
             if (nameInp) adjustNameFontSize(nameInp);
@@ -755,7 +754,16 @@
         scheduleCloudSync();
     }
 
+    // Gitul-id aron automatic mo-apply ang comma samtang nag-type ka sa amount
     window.handleAmountInput = function(index, inputEl) {
+        let rawVal = inputEl.value.replace(/,/g, '');
+        if (!isNaN(rawVal) && rawVal !== "") {
+            let num = parseFloat(rawVal);
+            inputEl.value = num.toLocaleString();
+        } else if (rawVal === "") {
+            inputEl.value = "";
+        }
+
         window.fundsData[index]['amount'] = inputEl.value;
         adjustAmountFontSize(inputEl);
         calculateGrandTotal();
@@ -782,7 +790,7 @@
             total += parseNum(item.amount);
         });
         let grandTotalEl = document.getElementById('grand-total');
-        grandTotalEl.innerText = formatNumber(total);
+        grandTotalEl.innerText = '₱' + formatNumber(total);
         
         let length = grandTotalEl.innerText.length;
         if (length > 12) {

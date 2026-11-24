@@ -20,8 +20,8 @@
             user-select: none;
         }
         body {
-            background-color: #070a0f;
-            color: #f3f4f6;
+            background: radial-gradient(circle at top, #6b0d23 0%, #3d0612 55%, #24030a 100%);
+            color: #fff5f7;
             padding: 16px;
             display: flex;
             flex-direction: column;
@@ -33,7 +33,7 @@
         #lock-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: #070a0f;
+            background: radial-gradient(circle at top, #6b0d23 0%, #3d0612 55%, #24030a 100%);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -53,33 +53,34 @@
         .welcome-user-text {
             font-size: 20px;
             font-weight: 700;
-            color: #34d399;
+            color: #ffffff;
             letter-spacing: -0.3px;
         }
         .lock-title {
             font-size: 14px;
             font-weight: 500;
-            color: #94a3b8;
+            color: #fbcfe8;
             letter-spacing: 0.5px;
         }
         .pattern-grid {
             position: relative;
             width: 320px;
             height: 320px;
-            background: #0f172a;
-            border: 1px solid #1f2937;
+            background: rgba(25, 3, 9, 0.78);
+            border: 1px solid rgba(255, 255, 255, 0.14);
             border-radius: 28px;
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
             padding: 28px;
             touch-action: none;
-            box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 18px 38px rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(8px);
         }
         .pattern-dot {
             width: 20px;
             height: 20px;
-            background: #334155;
+            background: rgba(255, 255, 255, 0.25);
             border-radius: 50%;
             margin: auto;
             position: relative;
@@ -87,9 +88,9 @@
             pointer-events: none;
         }
         .pattern-dot.active {
-            background: #059669;
-            transform: scale(1.6);
-            box-shadow: 0 0 16px rgba(5, 150, 105, 0.8);
+            background: #38bdf8;
+            transform: scale(1.55);
+            box-shadow: 0 0 16px rgba(56, 189, 248, 0.85);
         }
         #pattern-svg {
             position: absolute;
@@ -98,7 +99,7 @@
             pointer-events: none;
         }
         .lock-error {
-            color: #f87171;
+            color: #fde047;
             font-size: 13px;
             min-height: 18px;
         }
@@ -115,39 +116,41 @@
             max-width: 440px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
-            margin-bottom: 24px;
+            gap: 14px;
+            margin-bottom: 18px;
         }
         
-        /* App Header / Balance Card */
+        /* Minimal Professional Balance Card */
         .balance-card {
-            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-            border: 1px solid #1f2937;
-            border-radius: 16px;
+            background: linear-gradient(155deg, rgba(136, 19, 55, 0.72) 0%, rgba(44, 5, 15, 0.88) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 18px;
             padding: 22px 20px 18px;
             text-align: center;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
             position: relative;
             overflow: hidden;
+            backdrop-filter: blur(8px);
         }
         .balance-card::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; height: 3px;
-            background: linear-gradient(90deg, #059669, #0284c7);
+            top: 0; left: 0; right: 0; height: 2px;
+            background: linear-gradient(90deg, rgba(255,255,255,0.15), #38bdf8, rgba(255,255,255,0.15));
         }
         .balance-title {
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
-            color: #94a3b8;
-            letter-spacing: 1.5px;
+            color: #fce7f3;
+            letter-spacing: 1.6px;
             text-transform: uppercase;
             margin-bottom: 8px;
+            opacity: 0.9;
         }
         .balance-amount {
             font-size: 32px;
             font-weight: 700;
-            color: #34d399;
+            color: #ffffff;
             letter-spacing: -0.5px;
             word-break: break-all;
         }
@@ -156,7 +159,7 @@
         .ewallet-subtotal-box {
             margin-top: 14px;
             padding-top: 12px;
-            border-top: 1px solid rgba(148, 163, 184, 0.15);
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -165,14 +168,14 @@
         .ewallet-subtotal-label {
             font-size: 11px;
             font-weight: 600;
-            color: #94a3b8;
+            color: #fbcfe8;
             letter-spacing: 1px;
             text-transform: uppercase;
         }
         .ewallet-subtotal-amount {
             font-size: 16px;
             font-weight: 700;
-            color: #38bdf8;
+            color: #7dd3fc;
             letter-spacing: -0.2px;
         }
 
@@ -180,7 +183,7 @@
         .accounts-list {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 9px;
         }
 
         /* Individual Account Item Card */
@@ -188,15 +191,16 @@
             display: grid;
             grid-template-columns: 1fr 130px 36px;
             align-items: center;
-            border: 1px solid #1f2937;
-            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.11);
+            border-radius: 13px;
             padding: 10px 12px;
-            transition: all 0.2s ease;
+            transition: border-color 0.2s ease, transform 0.15s ease;
             position: relative;
             overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
         .row-item:hover {
-            border-color: #334155;
+            border-color: rgba(255, 255, 255, 0.28);
         }
 
         /* Left Side: Brand/Name Wrapper */
@@ -204,17 +208,17 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            border-left: 4px solid #334155;
-            padding-left: 8px;
+            border-left: 3.5px solid #e2e8f0;
+            padding-left: 9px;
             height: 36px;
-            border-radius: 4px;
-            transition: all 0.3s ease;
+            border-radius: 3px;
+            transition: all 0.25s ease;
             overflow: hidden;
         }
 
         .brand-icon {
-            width: 22px;
-            height: 22px;
+            width: 21px;
+            height: 21px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -223,7 +227,7 @@
         .brand-icon svg {
             width: 100%;
             height: 100%;
-            transition: fill 0.3s ease;
+            transition: fill 0.25s ease;
         }
 
         /* Dynamic Font Size Name Input */
@@ -231,14 +235,14 @@
             width: 100%;
             background: transparent;
             border: none;
-            color: #f1f5f9;
+            color: #ffffff;
             font-size: 15px;
             font-weight: 600;
             outline: none;
             white-space: nowrap;
         }
         .input-name::placeholder {
-            color: #475569;
+            color: rgba(255, 255, 255, 0.45);
         }
 
         /* Dynamic Font Size Amount Input */
@@ -246,7 +250,7 @@
             width: 100%;
             background: transparent;
             border: none;
-            color: #f3f4f6;
+            color: #ffffff;
             font-size: 16px;
             font-weight: 600;
             text-align: right;
@@ -256,17 +260,17 @@
             white-space: nowrap;
         }
         .input-amount:focus {
-            color: #34d399;
+            color: #7dd3fc;
         }
         .input-amount::placeholder {
-            color: #334155;
+            color: rgba(255, 255, 255, 0.35);
         }
 
         /* Delete Row Button */
         .btn-delete-row {
             background: transparent;
             border: none;
-            color: #64748b;
+            color: rgba(255, 255, 255, 0.55);
             font-size: 18px;
             cursor: pointer;
             display: flex;
@@ -274,16 +278,16 @@
             justify-content: center;
             height: 32px;
             width: 32px;
-            border-radius: 6px;
+            border-radius: 7px;
             transition: all 0.2s;
             margin-left: 4px;
         }
         .btn-delete-row:hover {
-            color: #f87171;
-            background: rgba(239, 68, 68, 0.1);
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.14);
         }
 
-        /* Bottom Action Button Area */
+        /* Minimal Professional Action Buttons */
         .actions-area {
             display: flex;
             width: 100%;
@@ -292,29 +296,32 @@
         }
         .btn-action {
             flex: 1;
-            background: #059669;
+            background: #1d6ef2;
             color: #ffffff;
-            border: none;
-            padding: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            padding: 13px 14px;
             border-radius: 12px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 700;
+            letter-spacing: 0.3px;
             cursor: pointer;
-            box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.28);
             text-align: center;
             transition: all 0.2s ease;
         }
         .btn-action:hover {
-            background: #10b981;
+            background: #2b7cff;
             transform: translateY(-1px);
         }
         .btn-secondary {
-            background: #1e293b;
-            border: 1px solid #334155;
+            background: rgba(34, 4, 12, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            color: #fff5f7;
             box-shadow: none;
         }
         .btn-secondary:hover {
-            background: #334155;
+            background: rgba(66, 9, 24, 0.85);
+            border-color: rgba(255, 255, 255, 0.28);
         }
     </style>
 </head>
@@ -327,7 +334,7 @@
         <div class="lock-title" id="lock-prompt">Loading Security...</div>
         <div class="pattern-grid" id="pattern-grid">
             <svg id="pattern-svg">
-                <line id="current-line" x1="0" y1="0" x2="0" y2="0" stroke="#059669" stroke-width="4" stroke-linecap="round" style="display:none;"/>
+                <line id="current-line" x1="0" y1="0" x2="0" y2="0" stroke="#38bdf8" stroke-width="4" stroke-linecap="round" style="display:none;"/>
             </svg>
             <div class="pattern-dot" data-index="0"></div>
             <div class="pattern-dot" data-index="1"></div>
@@ -451,7 +458,7 @@
             line.setAttribute('y1', p1.y);
             line.setAttribute('x2', p2.x);
             line.setAttribute('y2', p2.y);
-            line.setAttribute('stroke', '#059669');
+            line.setAttribute('stroke', '#38bdf8');
             line.setAttribute('stroke-width', '4');
             line.setAttribute('stroke-linecap', 'round');
             line.classList.add('permanent-line');
@@ -612,7 +619,6 @@
                 data = [cashObj, gcashObj, maribankObj, mayaObj, mayaGreenObj, ...others];
                 set(fundsRef, data);
             } else {
-                // Ensure Maya Green stays directly below Maya Business even if reordered
                 let mayaIdx = data.findIndex(i => i.name && i.name.toLowerCase().trim() === "maya business");
                 let greenIdx = data.findIndex(i => i.name && i.name.toLowerCase().trim() === "maya green");
                 if (mayaIdx !== -1 && greenIdx !== -1 && greenIdx !== mayaIdx + 1) {
@@ -664,7 +670,6 @@
         return isNaN(parsed) ? 0 : parsed;
     }
 
-    // Dynamic Font Adjustment para sa NAME input
     window.adjustNameFontSize = function(inputEl) {
         let len = inputEl.value.length;
         if (len > 16) {
@@ -678,7 +683,6 @@
         }
     }
 
-    // Dynamic Font Adjustment para sa AMOUNT input
     window.adjustAmountFontSize = function(inputEl) {
         let len = inputEl.value.length;
         if (len > 11) {
@@ -693,44 +697,43 @@
     }
 
     window.getBrandInfo = function(name) {
-        if (!name) return { color: '#475569', bg: 'linear-gradient(90deg, rgba(71, 85, 105, 0.18) 0%, rgba(17, 24, 39, 0.9) 80%)', icon: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>` };
+        if (!name) return { color: '#f9a8d4', bg: 'linear-gradient(90deg, rgba(244, 114, 182, 0.16) 0%, rgba(36, 4, 12, 0.84) 85%)', icon: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>` };
         let lower = name.toLowerCase().trim();
         
         if (lower.includes('gcash')) {
             return {
-                color: '#0099ff',
-                bg: 'linear-gradient(90deg, rgba(0, 153, 255, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
+                color: '#38bdf8',
+                bg: 'linear-gradient(90deg, rgba(14, 165, 233, 0.28) 0%, rgba(36, 4, 12, 0.84) 85%)',
                 icon: `<svg viewBox="0 0 24 24"><path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>`
             };
         } else if (lower.includes('maribank')) {
             return {
                 color: '#fb923c',
-                bg: 'linear-gradient(90deg, rgba(251, 146, 60, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
+                bg: 'linear-gradient(90deg, rgba(251, 146, 60, 0.26) 0%, rgba(36, 4, 12, 0.84) 85%)',
                 icon: `<svg viewBox="0 0 24 24"><path d="M11.5 1L2 6v2h19V6m-9.5 4c-3.87 0-7 3.13-7 7s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7m0 12c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>`
             };
         } else if (lower.includes('maya green')) {
-            // Light neon green nga lahi og color sa Cash (#34d399)
             return {
                 color: '#a3e635',
-                bg: 'linear-gradient(90deg, rgba(163, 230, 53, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
+                bg: 'linear-gradient(90deg, rgba(163, 230, 53, 0.24) 0%, rgba(36, 4, 12, 0.84) 85%)',
                 icon: `<svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`
             };
         } else if (lower.includes('maya')) {
             return {
-                color: '#c084fc',
-                bg: 'linear-gradient(90deg, rgba(192, 132, 252, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
+                color: '#e879f9',
+                bg: 'linear-gradient(90deg, rgba(232, 121, 249, 0.24) 0%, rgba(36, 4, 12, 0.84) 85%)',
                 icon: `<svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`
             };
         } else if (lower.includes('cash')) {
             return {
                 color: '#34d399',
-                bg: 'linear-gradient(90deg, rgba(52, 211, 153, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
+                bg: 'linear-gradient(90deg, rgba(52, 211, 153, 0.24) 0%, rgba(36, 4, 12, 0.84) 85%)',
                 icon: `<svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.64 0-.83-.41-1.64-2.92-2.23-3.22-.75-4.42-1.83-4.42-3.5 0-1.64 1.32-2.86 3.12-3.21V4h2.67v1.95c1.4.31 2.7 1.25 2.92 3.01h-1.97c-.12-.8-.71-1.41-2.13-1.41-1.35 0-2.05.59-2.05 1.44 0 .75.48 1.32 2.62 1.83 3.39.81 4.72 1.83 4.72 3.65 0 1.73-1.3 2.96-3.23 3.34z"/></svg>`
             };
         } else {
             return {
-                color: '#94a3b8',
-                bg: 'linear-gradient(90deg, rgba(148, 163, 184, 0.2) 0%, rgba(17, 24, 39, 0.9) 80%)',
+                color: '#fda4af',
+                bg: 'linear-gradient(90deg, rgba(251, 113, 133, 0.14) 0%, rgba(36, 4, 12, 0.84) 85%)',
                 icon: `<svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>`
             };
         }
@@ -755,7 +758,6 @@
                     <div class="brand-icon" id="icon-${index}" style="fill: ${brand.color};">${brand.icon}</div>
                     <input type="text" class="input-name" id="name-${index}" value="${item.name || ''}" placeholder="Account name..." oninput="updateItemName(${index}, this)">
                 </div>
-                <!-- Gi-dugtangan og inputmode="numeric" ug pattern="[0-9]*" aron mo-automatic og numpad keyboard sa mobile -->
                 <input type="text" class="input-amount" id="amount-${index}" value="${item.amount || ''}" placeholder="0" 
                     inputmode="numeric" pattern="[0-9]*"
                     onfocus="handleAmountFocus(this)" 

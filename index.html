@@ -124,7 +124,7 @@
             background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
             border: 1px solid #1f2937;
             border-radius: 16px;
-            padding: 24px 20px;
+            padding: 22px 20px 18px;
             text-align: center;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
             position: relative;
@@ -150,6 +150,30 @@
             color: #34d399;
             letter-spacing: -0.5px;
             word-break: break-all;
+        }
+
+        /* E-Wallets Sub-Total Box inside Balance Card */
+        .ewallet-subtotal-box {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(148, 163, 184, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .ewallet-subtotal-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #94a3b8;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .ewallet-subtotal-amount {
+            font-size: 16px;
+            font-weight: 700;
+            color: #38bdf8;
+            letter-spacing: -0.2px;
         }
 
         /* Accounts List Container */
@@ -327,6 +351,10 @@
     <div class="balance-card">
         <div class="balance-title">Total Available Funds</div>
         <div class="balance-amount" id="grand-total">₱0</div>
+        <div class="ewallet-subtotal-box">
+            <span class="ewallet-subtotal-label">Total E-Wallets:</span>
+            <span class="ewallet-subtotal-amount" id="ewallet-total">₱0</span>
+        </div>
     </div>
 
     <!-- Accounts List -->
@@ -366,6 +394,7 @@
         { name: "GCash", amount: "10,005" },
         { name: "MariBank", amount: "338,063" },
         { name: "Maya Business", amount: "40,294" },
+        { name: "Maya Green", amount: "0" },
         { name: "Janice", amount: "1,777" },
         { name: "Kim", amount: "2,000" },
         { name: "Cherry", amount: "5,890" }
@@ -566,20 +595,32 @@
             let hasGcash = names.includes("gcash");
             let hasMaribank = names.includes("maribank");
             let hasMaya = names.includes("maya business");
+            let hasMayaGreen = names.includes("maya green");
 
-            if (!hasCash || !hasGcash || !hasMaribank || !hasMaya) {
+            if (!hasCash || !hasGcash || !hasMaribank || !hasMaya || !hasMayaGreen) {
                 let cashObj = data.find(i => i.name && i.name.toLowerCase().trim() === "cash") || { name: "Cash", amount: "0" };
                 let gcashObj = data.find(i => i.name && i.name.toLowerCase().trim() === "gcash") || { name: "GCash", amount: "0" };
                 let maribankObj = data.find(i => i.name && i.name.toLowerCase().trim() === "maribank") || { name: "MariBank", amount: "0" };
                 let mayaObj = data.find(i => i.name && i.name.toLowerCase().trim() === "maya business") || { name: "Maya Business", amount: "0" };
+                let mayaGreenObj = data.find(i => i.name && i.name.toLowerCase().trim() === "maya green") || { name: "Maya Green", amount: "0" };
 
                 let others = data.filter(i => {
                     let n = i.name ? i.name.toLowerCase().trim() : "";
-                    return n !== "cash" && n !== "gcash" && n !== "maribank" && n !== "maya business";
+                    return n !== "cash" && n !== "gcash" && n !== "maribank" && n !== "maya business" && n !== "maya green";
                 });
 
-                data = [cashObj, gcashObj, maribankObj, mayaObj, ...others];
+                data = [cashObj, gcashObj, maribankObj, mayaObj, mayaGreenObj, ...others];
                 set(fundsRef, data);
+            } else {
+                // Ensure Maya Green stays directly below Maya Business even if reordered
+                let mayaIdx = data.findIndex(i => i.name && i.name.toLowerCase().trim() === "maya business");
+                let greenIdx = data.findIndex(i => i.name && i.name.toLowerCase().trim() === "maya green");
+                if (mayaIdx !== -1 && greenIdx !== -1 && greenIdx !== mayaIdx + 1) {
+                    let [greenItem] = data.splice(greenIdx, 1);
+                    let updatedMayaIdx = data.findIndex(i => i.name && i.name.toLowerCase().trim() === "maya business");
+                    data.splice(updatedMayaIdx + 1, 0, greenItem);
+                    set(fundsRef, data);
+                }
             }
 
             let activeEl = document.activeElement;
@@ -667,8 +708,14 @@
                 bg: 'linear-gradient(90deg, rgba(251, 146, 60, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
                 icon: `<svg viewBox="0 0 24 24"><path d="M11.5 1L2 6v2h19V6m-9.5 4c-3.87 0-7 3.13-7 7s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7m0 12c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>`
             };
+        } else if (lower.includes('maya green')) {
+            // Light neon green nga lahi og color sa Cash (#34d399)
+            return {
+                color: '#a3e635',
+                bg: 'linear-gradient(90deg, rgba(163, 230, 53, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
+                icon: `<svg viewBox="0 0 24 24"><path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>`
+            };
         } else if (lower.includes('maya')) {
-            // Gi-ilisan nako og Neon Violet ang Maya Business
             return {
                 color: '#c084fc',
                 bg: 'linear-gradient(90deg, rgba(192, 132, 252, 0.28) 0%, rgba(17, 24, 39, 0.9) 80%)',
@@ -701,7 +748,7 @@
             rowDiv.style.background = brand.bg;
 
             let lowerName = item.name ? item.name.toLowerCase().trim() : "";
-            let isProtected = lowerName === 'cash' || lowerName === 'gcash' || lowerName === 'maribank' || lowerName === 'maya business';
+            let isProtected = lowerName === 'cash' || lowerName === 'gcash' || lowerName === 'maribank' || lowerName === 'maya business' || lowerName === 'maya green';
 
             rowDiv.innerHTML = `
                 <div class="name-input-wrapper" id="wrapper-${index}" style="border-left-color: ${brand.color};">
@@ -754,6 +801,7 @@
             icon.innerHTML = brand.icon;
         }
 
+        calculateGrandTotal();
         scheduleCloudSync();
     }
 
@@ -788,9 +836,19 @@
 
     window.calculateGrandTotal = function() {
         let total = 0;
+        let ewalletTotal = 0;
+        const ewalletNames = ['gcash', 'maribank', 'maya business', 'maya green'];
+
         window.fundsData.forEach(item => {
-            total += parseNum(item.amount);
+            let amt = parseNum(item.amount);
+            total += amt;
+
+            let lowerName = item.name ? item.name.toLowerCase().trim() : "";
+            if (ewalletNames.includes(lowerName)) {
+                ewalletTotal += amt;
+            }
         });
+
         let grandTotalEl = document.getElementById('grand-total');
         grandTotalEl.innerText = '₱' + formatNumber(total);
         
@@ -801,6 +859,11 @@
             grandTotalEl.style.fontSize = "26px";
         } else {
             grandTotalEl.style.fontSize = "32px";
+        }
+
+        let ewalletTotalEl = document.getElementById('ewallet-total');
+        if (ewalletTotalEl) {
+            ewalletTotalEl.innerText = '₱' + formatNumber(ewalletTotal);
         }
     }
 
